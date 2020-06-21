@@ -8,6 +8,8 @@ placeholders=(
   "\#{sysstat_mem}"
   "\#{sysstat_swap}"
   "\#{sysstat_loadavg}"
+  "\#{sysstat_itemp}"
+  "\#{sysstat_ntemp}"
 )
 
 commands=(
@@ -15,6 +17,8 @@ commands=(
   "#($CURRENT_DIR/scripts/mem.sh)"
   "#($CURRENT_DIR/scripts/swap.sh)"
   "#($CURRENT_DIR/scripts/loadavg.sh)"
+  "#($CURRENT_DIR/scripts/itemp.sh)"
+  "#($CURRENT_DIR/scripts/ntemp.sh)"
 )
 
 do_interpolation() {
