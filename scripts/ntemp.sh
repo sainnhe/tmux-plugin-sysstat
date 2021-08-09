@@ -15,7 +15,7 @@ print_gpu_temp() {
     fi
     printf "N:%3.0fº%s" "$temp" "$units"
   else
-    echo "no sensors found"
+    echo ""
   fi
 }
 

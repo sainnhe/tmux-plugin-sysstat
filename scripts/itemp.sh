@@ -15,7 +15,7 @@ print_cpu_temp() {
     fi
     printf "I:%3.0fº%s" "$temp" "$units"
   else
-    echo "no sensors found"
+    echo ""
   fi
 }
 
