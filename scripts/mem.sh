@@ -96,9 +96,20 @@ get_mem_usage_osx(){
   '
 }
 
-# Relies on vmstat, but could also be done with top on FreeBSD
+# Relies on sysctl page counters, prints free and used memory in KiB.
+# "free" includes inactive pages, which are reclaimable, like top does.
 get_mem_usage_freebsd(){
-  vmstat -H | tail -n 1 | awk '{ print $5, $4 }'
+  sysctl -n hw.pagesize \
+    vm.stats.vm.v_page_count \
+    vm.stats.vm.v_free_count \
+    vm.stats.vm.v_inactive_count \
+    vm.stats.vm.v_cache_count | awk '
+      { v[NR]=$1 }
+      END {
+        free=(v[3]+v[4]+v[5])*v[1]/1024
+        total=v[2]*v[1]/1024
+        print free, total-free
+      }'
 }
 
 # Method #1. Sum up free+buffers+cached, treat it as "available" memory, assuming buff+cache can be reclaimed. Note, that this assumption is not 100% correct, buff+cache most likely cannot be 100% reclaimed, but this is how memory calculation is used to be done on Linux
