@@ -74,6 +74,6 @@ function get_size_format(){
  
 # formula fahrenheit=(9/5)*celsius+32
 celsius_to_fahrenheit() {
-  echo "scale=2;((9/5) * $1) + $1" | bc
+  echo "scale=2;((9/5) * $1) + 32" | bc
 }
  

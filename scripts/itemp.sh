@@ -9,7 +9,14 @@ print_cpu_temp() {
   if command_exists "sensors"; then
     local units=$1
     local temp
-    temp=$(sensors | sed '/^[^Package]/d' | sed '/^\s*$/d' | tail -n 1 | awk '{a=$4} END {printf("%f", a)}')
+    temp=$(sensors | awk '
+      /^Package id 0:/ { gsub(/[^0-9.]/, "", $4); print $4; exit }
+      /^(Tctl|Tdie):/ { gsub(/[^0-9.]/, "", $2); print $2; exit }
+    ')
+    if [ -z "$temp" ]; then
+      echo ""
+      return
+    fi
     if [ "$units" = "F" ]; then
       temp=$(celsius_to_fahrenheit "$temp")
     fi

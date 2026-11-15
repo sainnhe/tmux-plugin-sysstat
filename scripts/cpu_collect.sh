@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-LC_NUMERIC=C
+export LC_ALL=C
 
 set -u
 set -e
@@ -28,13 +28,13 @@ get_cpu_usage() {
         | sed -u -nr '/CPU usage/s/.*,[[:space:]]*([0-9]+[.,][0-9]*)%[[:space:]]*idle.*/\1/p' \
         | gstdbuf -o0 awk '{ print 100-$0 }'
     fi
-  elif ! command_exists "vmstat"; then
+  elif command_exists "vmstat"; then
     if is_freebsd; then
       vmstat -n "$refresh_interval" -c "$samples_count" \
         | stdbuf -o0 awk 'NR>2 {print 100-$(NF-0)}'
     else
       vmstat -n "$refresh_interval" "$samples_count" \
-        | stdbuf -o0 awk 'NR>2 {print 100-$(NF-2)}'
+        | stdbuf -o0 awk 'NR==2 { for (i=1;i<=NF;i++) if ($i=="id") id=i } NR>2 {print 100-$id}'
     fi
   else
     if is_freebsd; then
