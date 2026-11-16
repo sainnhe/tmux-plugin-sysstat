@@ -45,6 +45,8 @@ Once plugged in, tmux `status-left` or `status-right` options can be configured 
 - `#{sysstat_mem}`, memory usage - `MEM:73%`
 - `#{sysstat_swap}`, swap usage - `SW:66%`
 - `#{sysstat_loadavg}`, system load average - `0.25 0.04 0.34`
+- `#{sysstat_itemp}`, CPU temperature - `C: 45ºC` (requires `sensors` on Linux, `macmon` on OSX)
+- `#{sysstat_ntemp}`, GPU temperature - `G: 52ºC` (requires `nvidia-smi`/`sensors` on Linux, `macmon` on OSX)
 
 For example:
 ```
@@ -54,7 +56,7 @@ set -g status-right "#{sysstat_cpu} | #{sysstat_mem} | #{sysstat_swap} | #{sysst
 Changing default output
 ------------------------
 
-You can change default output for CPU and memory metrics, if you need more fields to show, or you want to provide custom template. In your `.tmux.conf`:
+You can change default output for CPU, memory and temperature metrics, if you need more fields to show, or you want to provide custom template. In your `.tmux.conf`:
 
 For example, to get `Used 4.5G out of 16G` output for memory metric:
 
@@ -66,6 +68,13 @@ If you don't want `CPU:` prefix and don't like colored output for CPU metric:
 
 ```
 set -g @sysstat_cpu_view_tmpl '#{cpu.pused}'
+```
+
+Or to show only colored CPU and GPU temperatures:
+
+```
+set -g @sysstat_itemp_view_tmpl 'CPU #[fg=#{itemp.color}]#{itemp.temp}#[default]'
+set -g @sysstat_ntemp_view_tmpl 'GPU #[fg=#{ntemp.color}]#{ntemp.temp}#[default]'
 ```
 
 ### Supported fields
@@ -109,6 +118,38 @@ As you can see, each metric can be configured with template, containing fixed te
     <tr>
         <td><code>#{mem.total}</code></td>
         <td>total installed memory</td>
+    </tr>
+</table>
+
+<table>
+    <th>CPU temperature</th>
+    <tr>
+        <td><code>#{itemp.color}</code></td>
+        <td>main metric color</td>
+    </tr>
+    <tr>
+        <td><code>#{itemp.temp}</code></td>
+        <td>CPU temperature (rounded)</td>
+    </tr>
+    <tr>
+        <td><code>#{itemp.units}</code></td>
+        <td>temperature units, taken from <code>@temp_units</code></td>
+    </tr>
+</table>
+
+<table>
+    <th>GPU temperature</th>
+    <tr>
+        <td><code>#{ntemp.color}</code></td>
+        <td>main metric color</td>
+    </tr>
+    <tr>
+        <td><code>#{ntemp.temp}</code></td>
+        <td>GPU temperature (rounded)</td>
+    </tr>
+    <tr>
+        <td><code>#{ntemp.units}</code></td>
+        <td>temperature units, taken from <code>@temp_units</code></td>
     </tr>
 </table>
 
@@ -158,6 +199,8 @@ Each metric output is colored by default. Colors vary depending on metric value.
     <tr>
       <td><b>Threshold</b></td>
       <td><b>CPU</b></td>
+      <td><b>CPU temp</b></td>
+      <td><b>GPU temp</b></td>
       <td><b>Memory</b></td>
       <td><b>Swap</b></td>
       <td><b>Default color</b></td>
@@ -165,6 +208,8 @@ Each metric output is colored by default. Colors vary depending on metric value.
     <tr>
         <td>low</td>
         <td>x &lt; 30%</td>
+        <td>x &lt; 60ºC</td>
+        <td>x &lt; 60ºC</td>
         <td>x &lt; 75%</td>
         <td>x &lt; 25%</td>
         <td>green</td>
@@ -172,6 +217,8 @@ Each metric output is colored by default. Colors vary depending on metric value.
     <tr>
         <td>medium</td>
         <td>30% &lt; x &lt; 80%</td>
+        <td>60ºC &lt; x &lt; 80ºC</td>
+        <td>60ºC &lt; x &lt; 80ºC</td>
         <td>75% &lt; x &lt; 90%</td>
         <td>25% &lt; x &lt; 75%</td>
         <td>yellow</td>
@@ -179,6 +226,8 @@ Each metric output is colored by default. Colors vary depending on metric value.
     <tr>
         <td>high</td>
         <td>x &gt; 80%</td>
+        <td>x &gt; 80ºC</td>
+        <td>x &gt; 80ºC</td>
         <td>x &gt; 90%</td>
         <td>x &gt; 75%</td>
         <td>red</td>
@@ -196,7 +245,15 @@ set -g @sysstat_mem_stress_threshold "95"
 
 set -g @sysstat_swap_medium_threshold "80"
 set -g @sysstat_swap_stress_threshold "90"
+
+set -g @sysstat_itemp_medium_threshold "60"
+set -g @sysstat_itemp_stress_threshold "80"
+
+set -g @sysstat_ntemp_medium_threshold "60"
+set -g @sysstat_ntemp_stress_threshold "80"
 ```
+
+Temperature thresholds are always expressed in Celsius, even when `@temp_units` is set to `F`.
 
 You can change colors for each threshold individually. You can use ANSI basic colors (red, cyan, green) or if your terminal supports 256 colors (and most do nowadays), use `colourXXX` format.
 
@@ -207,9 +264,17 @@ set -g @sysstat_cpu_color_stress "colour160"
 set -g @sysstat_mem_color_low "green"
 set -g @sysstat_mem_color_medium "blue"
 set -g @sysstat_mem_color_stress "cyan"
+
+set -g @sysstat_itemp_color_low "green"
+set -g @sysstat_itemp_color_medium "yellow"
+set -g @sysstat_itemp_color_stress "red"
+
+set -g @sysstat_ntemp_color_low "green"
+set -g @sysstat_ntemp_color_medium "yellow"
+set -g @sysstat_ntemp_color_stress "red"
 ```
 
-`#{(mem|cpu|swap).color}` placeholder in your `@sysstat_(mem|cpu|swap)_view_tmpl` would be replaced by corresponding color, depending on whether metric value falls in particular threshold.
+`#{(mem|cpu|swap|itemp|ntemp).color}` placeholder in your `@sysstat_(mem|cpu|swap|itemp|ntemp)_view_tmpl` would be replaced by corresponding color, depending on whether metric value falls in particular threshold.
 
 ### 256 color palette support
 
