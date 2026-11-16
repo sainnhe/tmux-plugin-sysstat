@@ -33,6 +33,19 @@ command_exists() {
   type "$command" >/dev/null 2>&1
 }
 
+# macOS exposes no root-free interface for die temperatures: powermetrics needs
+# sudo, and ioreg only has NVMe/battery sensors. macmon reads the same sensors
+# powermetrics does without sudo, and "macmon pipe -s 1" prints one JSON line.
+# $1 - JSON field to read, e.g. cpu_temp_avg or gpu_temp_avg
+get_macmon_temp() {
+  local key="$1"
+  command_exists "macmon" || return 0
+
+  macmon pipe -s 1 -i 100 2>/dev/null \
+    | sed -n "s/.*\"${key}\": *\([0-9][0-9.]*\).*/\1/p" \
+    | head -n 1
+}
+
 # because bash does not support floating-point math
 # but awk does
 calc() {
