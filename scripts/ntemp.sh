@@ -25,9 +25,13 @@ get_amd_temp() {
 print_gpu_temp() {
   local units=$1
   local temp
-  temp=$(get_nvidia_temp)
-  if [ -z "$temp" ]; then
-    temp=$(get_amd_temp)
+  if is_osx; then
+    temp=$(get_macmon_temp "gpu_temp_avg")
+  else
+    temp=$(get_nvidia_temp)
+    if [ -z "$temp" ]; then
+      temp=$(get_amd_temp)
+    fi
   fi
   if [ -z "$temp" ]; then
     echo ""
