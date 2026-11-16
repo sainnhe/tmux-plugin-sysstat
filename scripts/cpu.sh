@@ -61,11 +61,11 @@ start_cpu_collect_if_required() {
     return;
   fi
   
-  jobs >/dev/null 2>&1
   "$CURRENT_DIR/cpu_collect.sh" &>/dev/null &
-  if [ -n "$(jobs -n)" ]; then
-    echo "$!" > "${collect_cpu_pidfile}"
-  else
+  local collect_cpu_pid=$!
+  echo "$collect_cpu_pid" > "$collect_cpu_pidfile"
+
+  if ! ps -p "$collect_cpu_pid" > /dev/null 2>&1; then
     echo "Failed to start CPU collect job" >&2
     exit 1
   fi
